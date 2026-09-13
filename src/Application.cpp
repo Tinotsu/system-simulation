@@ -1,10 +1,10 @@
+#include "glm/ext/vector_float2.hpp"
 #include "imgui.h"
 #define GL_SILENCE_DEPRECATION
 #define GLFW_INCLUDE_NONE
 #include "IndexBuffer.h"
 #include "Renderer.h"
 #include "Shader.h"
-#include "Texture.h"
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 #include "backends/imgui_impl_glfw.h"
@@ -28,8 +28,11 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // required on macOS
 
+    glm::ivec2 windowResolution(640, 480);
+
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(windowResolution.x, windowResolution.y,
+                              "Hello World", NULL, NULL);
     if (!window) {
         glfwTerminate();
         return -1;
@@ -46,13 +49,13 @@ int main(void) {
         return -1;
     }
 
-    glClearColor(1.0f, 0.5f, 0.5f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     float positions[] = {
-        -0.5f, -0.5f, 0.0F, 0.0f, // 0
-        0.5f,  -0.5f, 1.0f, 0.0f, // 1
-        0.5f,  0.5f,  1.0,  1.0f, // 2
-        -0.5f, 0.5f,  0.0f, 1.0f  // 3
+        -0.5f, -0.5f, // 0
+        0.5f,  -0.5f, // 1
+        0.5f,  0.5f,  // 2
+        -0.5f, 0.5f   // 3
     };
 
     // Index Buffer = transform any form into a triangle
@@ -61,17 +64,13 @@ int main(void) {
         2, 3, 0  //
     };
 
-    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-    GLCall(glEnable(GL_BLEND));
-
     VertexArray va;
 
     /* Create and fill the VBO (=Vertex Buffer Object), stores the actual vertex
      * data */
-    VertexBuffer vb(positions, 4 * 4 * sizeof(float));
+    VertexBuffer vb(positions, sizeof(positions));
 
     VertexBufferLayout layout;
-    layout.Push<float>(2);
     layout.Push<float>(2);
     va.AddBuffer(vb, layout);
 
@@ -84,11 +83,11 @@ int main(void) {
     Shader shader("./res/shaders/Basic.shader");
     shader.Bind();
     glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the current buffer
-    shader.SetUniform4f("u_Color", 0.2f, 0.3f, 0.8f, 1.0f);
 
-    Texture texture("res/textures/capsule_corp.jpeg");
-    texture.Bind();
-    shader.SetUniform1i("u_Texture", 0);
+    glm::ivec2 iResolution;
+    glfwGetFramebufferSize(window, &iResolution.x, &iResolution.y);
+
+    shader.SetUniform2i("iResolution", iResolution.x, iResolution.y);
 
     va.UnBind();
     vb.UnBind();
@@ -103,8 +102,8 @@ int main(void) {
     ImGuiIO &io = ImGui::GetIO();
     ImGui::StyleColorsDark();
 
-    glm::vec3 translationA(2, 2, 0);
-    glm::vec3 translationB(4, 2, 0);
+    glm::vec3 translationA(0, 0, 0);
+    glm::vec3 translationB(1, 1, 0);
 
     float r = 0.0f;
     float increment = 0.05;

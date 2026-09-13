@@ -1,6 +1,15 @@
 # Solar System and Launch Window calculation
 
+## Build
+
+`cmake --build build`
+`./build/Application`
+
 ## Road Map
+
+### *Make it work*
+
+---
 
 - [x] Initialize the project (copied from my repo
 <https://github.com/Tinotsu/cpp-opengl>) - 13.09.2026
@@ -67,3 +76,17 @@
 - [ ] Round trip
   - Lambert's problem
   - Numerical root finding
+
+### Make it right
+
+---
+
+### Make it fast
+
+---
+
+- [ ] Replacing OpenGL draw-call with batch rendering
+
+## Journal
+
+### How to render a circle

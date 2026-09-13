@@ -22,6 +22,10 @@ void Shader::SetUniform1i(const std::string &name, int value) {
     GLCall(glUniform1i(GetUniformLocation(name), value));
 };
 
+void Shader::SetUniform2i(const std::string &name, int v0, int v1) {
+    GLCall(glUniform2i(GetUniformLocation(name), v0, v1));
+};
+
 void Shader::SetUniform1f(const std::string &name, float value) {
     GLCall(glUniform1f(GetUniformLocation(name), value));
 };
@@ -49,7 +53,7 @@ int Shader::GetUniformLocation(const std::string &name) {
     return location;
 }
 
-ShaderProgramSource Shader::ParseShader(const std::string &filepath) {
+ShaderProgramSource Shader::ParseShader(const std::string &filepath = "") {
     std::ifstream stream(filepath);
 
     enum class ShaderType { NONE = -1, VERTEX = 0, FRAGMENT = 1 };
