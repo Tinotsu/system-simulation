@@ -46,8 +46,8 @@
 
 ### Launch Windows Calculation
 
-[] Button to set the camera in position to make the system look 2D
-[] SpaceShip object with trace
+[ ] Button to set the camera in position to make the system look 2D
+[ ] SpaceShip object with trace
     - Two-body orbital mechanics
     - Kepler's laws
     - Vis-viva equation
