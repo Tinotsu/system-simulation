@@ -169,7 +169,11 @@ On Earth, the constant for the acceleration of the gravitation is
 $g = 9.81ms^-2$, we can start from that because it is constant.
 Then :
 $$
-a = dv/dt = d^2x/dt^2 <=> dx = v*dt and dv = a * dt
+a = \frac{dv}{dt} = \frac{d^2x}{dt^2}
+\iff
+dx = v\,dt
+\quad\text{and}\quad
+dv = a\,dt
 $$
 
 In code :
