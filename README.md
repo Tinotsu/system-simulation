@@ -16,7 +16,7 @@
 
 ### Prototyping in 2D
 
-- [ ] Drawing a circle in 2D space
+- [x] Drawing a circle in 2D space - 13.09.2026
 - [ ] Add acceleration
   - Newtonian mechanics / Kinematics
 
