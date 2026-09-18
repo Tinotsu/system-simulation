@@ -89,4 +89,94 @@
 
 ## Journal
 
-### How to render a circle
+### How to render a circle with a fragment shader
+
+```SHADER
+void main()
+{
+    vec2 uv = vec2(gl_fragcoord.xy)/vec2(iresolution) * 2.0 - 1.0;
+    float aspect = float(iresolution.x) / float(iresolution.y);
+    uv.x *= aspect;
+    
+    fragcolor.rg = uv;
+    fragcolor.b = 0.5;
+    
+    float distance = step(length(localposition), 0.5);
+    fragcolor = vec4(vec3(distance), 1.0);
+    
+    if (any(greaterthan(uv, vec2(1.0))) || any(lessthan(uv,vec2(-1, -1))))
+    {
+        fragcolor.rgb = vec3(0.0);
+    }
+}
+```
+
+TODO : explain this code
+
+### How to make an object falling
+
+First I tried to make the object moving to the bottom : `alt += 0.5f;` , alt
+being the x coordinate of the object updated each frame.
+
+To make the time less depending of the performance of the computer the code is
+running on, I added a this:
+
+```C++
+constexpr double FIXED_DT = 1.0 / 60.0;
+
+double accumulator = 0.0f;
+auto previous = std::chrono::steady_clock::now();
+
+while (running)
+{
+    auto current = std::chrono::steady_clock::now();
+
+    double frameTime =
+        std::chrono::duration<double>(current - previous).count();
+
+    previous = current;
+    accumulator += frameTime;
+
+    while (accumulator >= FIXED_DT)
+    {
+        alt += -0.5f;
+        accumulator -= FIXED_DT;
+    }
+}
+```
+
+It makes the simulation advancing of 1/60 seconds and the accumulator is here
+to make sure the simulation run at a consistent speed regardless is rendering at
+30 FPS or 3000 FPS.
+
+The problem with the current movement of the object is that's the object is not
+falling, what's actually describing its movement is a velocity but the action
+of gravitation is an acceleration : $a = \frac{d^2x}{dt^2}$
+
+```C++
+while (accumulator >= FIXED_DT) {
+    dt += FIXED_DT;
+    alt += -0.5f * dt;
+    accumulator -= FIXED_DT;
+}
+```
+
+Now the object seems to fall when we start the simulation. But there is a problem,
+the acceleration depend on how many updates the simulation perform, if `FIXED_DT`
+change then `dt` change too. We should then start with a constant that could then
+give us the next values.
+On Earth, the constant for the acceleration of the gravitation is
+$g = 9.81ms^-2$, we can start from that because it is constant.
+Then :
+$$
+a = dv/dt = d^2x/dt^2 <=> dx = v*dt and dv = a * dt
+$$
+
+In code :
+
+```C++
+v += g * FIXED_DT
+alt -= v * FIXED_DT
+```
+
+And we removed `dt` because we don't need the accumulation time in our calculation.

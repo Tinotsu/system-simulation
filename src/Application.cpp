@@ -97,12 +97,10 @@ int main(void) {
     constexpr double FIXED_DT = 1.0 / 60.0;
     double accumulator = 0.0f;
     auto previous = std::chrono::steady_clock::now();
-    float time = 0;
-    float &dt = time;
 
-    float initAlt = 0;
-    float &alt = initAlt;
-    float g = -9.81;
+    float alt = 0.0f;
+    float v = 0.0f;
+    float g = 9.81f;
 
     while (!glfwWindowShouldClose(window)) {
 
@@ -123,11 +121,9 @@ int main(void) {
 
         while (accumulator >= FIXED_DT) {
 
-            dt += FIXED_DT;
+            v += g * FIXED_DT;
+            alt -= v * FIXED_DT;
 
-            /* UPDATE PHYSIC */
-
-            alt += -0.1f * dt;
             accumulator -= FIXED_DT;
         }
 
@@ -142,17 +138,9 @@ int main(void) {
         }
 
         {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
-            glm::mat4 mvp = proj * view * model;
-            shader.SetUniformMat4f("u_MVP", mvp);
-            renderer.Draw(va, ib, shader);
-        }
-
-        {
             ImGui::Begin("Debugger");
             // ImGui::SliderFloat3("Translation A", &translationA.x,
             // 0.0f, 1.0f);
-            ImGui::SliderFloat3("Translation B", &translationB.x, 0.0f, 1.0f);
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
