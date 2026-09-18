@@ -97,14 +97,16 @@ int main(void) {
     constexpr double FIXED_DT = 1.0 / 60.0;
     double accumulator = 0.0f;
     auto previous = std::chrono::steady_clock::now();
+    float time = 0;
+    float &dt = time;
 
     float initAlt = 0;
     float &alt = initAlt;
+    float g = -9.81;
 
     while (!glfwWindowShouldClose(window)) {
-        /* Render here */
-        renderer.Clear();
 
+        renderer.Clear();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -119,10 +121,13 @@ int main(void) {
         previous = current;
         accumulator += frameTime;
 
-        /* UPDATE PHYSIC */
-
         while (accumulator >= FIXED_DT) {
-            alt -= 0.01f;
+
+            dt += FIXED_DT;
+
+            /* UPDATE PHYSIC */
+
+            alt += -0.1f * dt;
             accumulator -= FIXED_DT;
         }
 
