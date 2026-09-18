@@ -168,13 +168,12 @@ give us the next values.
 On Earth, the constant for the acceleration of the gravitation is
 $g = 9.81ms^-2$, we can start from that because it is constant.
 Then :
-$$
-a = \frac{dv}{dt} = \frac{d^2x}{dt^2}
+
+$$a = \frac{dv}{dt} = \frac{d^2x}{dt^2}
 \iff
 dx = v\,dt
 \quad\text{and}\quad
-dv = a\,dt
-$$
+dv = a\,dt$$
 
 In code :
 
