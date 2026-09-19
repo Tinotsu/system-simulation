@@ -98,7 +98,7 @@ int main(void) {
     double accumulator = 0.0f;
     auto previous = std::chrono::steady_clock::now();
 
-    float alt = 0.0f;
+    float alt = 2.5f;
     float v = 0.0f;
     float g = 9.81f;
 
@@ -122,7 +122,13 @@ int main(void) {
         while (accumulator >= FIXED_DT) {
 
             v += g * FIXED_DT;
+
             alt -= v * FIXED_DT;
+
+            if (alt <= -2.5) {
+                alt = -2.5;
+                v = -v * 0.85f;
+            }
 
             accumulator -= FIXED_DT;
         }

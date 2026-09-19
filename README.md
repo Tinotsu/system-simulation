@@ -17,17 +17,12 @@
 ### Prototyping in 2D
 
 - [x] Drawing a circle in 2D space - 13.09.2026
-- [ ] Add acceleration
-  - Newtonian mechanics / Kinematics
 
-- [ ] Add collision on the border (remove later)
-  - Collision mechanics
-  - Momentum / impulse / coefficient of restitution
+- [x] Add acceleration - 18.09.2026
 
-- [ ] Fixed time step (delta t) and integrator
-  - Differential equations
-  - Euler Integration
-  - Numerical error / time step
+- [x] Add collision on the border (remove later) - 19.09.2026
+
+- [x] Fixed time step (delta t) and integrator - 18.09.2026
 
 - [ ] GUI to pause, accelerate, set time for the simulation
 - [ ] Making two objects orbiting around each other (Verlet/Leapfrog integration)
@@ -183,3 +178,24 @@ alt -= v * FIXED_DT
 ```
 
 And we removed `dt` because we don't need the accumulation time in our calculation.
+
+### Collision
+
+For simulating a bouncing ball effect for the object, we can simply inverse
+the sens and decrease its velocity when it reach the bottom border of the simulation
+window.
+
+```C++
+if (alt <= BOTTOM_BORDER) {
+    v = -v * e;
+}
+```
+
+In classical mechanics *e* is the coefficient of restitution what is the measure
+of the springiness of collisions between two surfaces.
+
+Since the ground is stationary:
+
+$$e = \frac{|v_{\text{after}}|}{|v_{\text{before}}|}$$
+
+In the code I chosen an arbitrary value because it's a random object.
