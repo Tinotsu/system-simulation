@@ -200,3 +200,7 @@ Since the ground is stationary:
 $$e = \frac{|v_{\text{after}}|}{|v_{\text{before}}|}$$
 
 In the code I chosen an arbitrary value because it's a random object.
+
+### GUI Control for time
+
+So let's get back when we created the delta T.
