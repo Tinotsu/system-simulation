@@ -17,10 +17,51 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
+void processInput(GLFWwindow *window) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+/* ================ */
+/* =====Physic===== */
+/* ================ */
+
+int frequency = 60;
+float FIXED_DT = 1.0 / frequency;
+float accumulator = 0.0f;
+auto previous = std::chrono::steady_clock::now();
+
+float speedTime = 1;
+
+const float g = 9.81f;
+
+// Initial State
+const float alt0 = 2.5f;
+const float v0 = 0.0f;
+const float simulationTime0 = 0.0f;
+
+float alt = alt0;
+float v = v0;
+float simulationTime = simulationTime0;
+
+void SimulationReset() {
+    alt = alt0;
+    v = v0;
+}
+
+void activePhysic(float dt) {
+    v += g * dt;
+    alt -= v * dt;
+
+    if (alt <= -2.5) {
+        alt = -2.5;
+        v = -v * 0.85f;
+    }
+}
+
 int main(void) {
     GLFWwindow *window;
 
-    /* Initialize the library */
     if (!glfwInit())
         return -1;
 
@@ -90,19 +131,9 @@ int main(void) {
     ImGuiIO &io = ImGui::GetIO();
     ImGui::StyleColorsDark();
 
-    /* ================ */
-    /* =====Physic===== */
-    /* ================ */
-
-    constexpr double FIXED_DT = 1.0 / 60.0;
-    double accumulator = 0.0f;
-    auto previous = std::chrono::steady_clock::now();
-
-    float alt = 2.5f;
-    float v = 0.0f;
-    float g = 9.81f;
-
     while (!glfwWindowShouldClose(window)) {
+
+        processInput(window);
 
         renderer.Clear();
         ImGui_ImplOpenGL3_NewFrame();
@@ -114,21 +145,17 @@ int main(void) {
         /* TIME */
 
         auto current = std::chrono::steady_clock::now();
-        double frameTime =
-            std::chrono::duration<double>(current - previous).count();
+
+        float frameTime = std::chrono::duration<float>(current - previous)
+                              .count(); // time recorded since the last frame
+
         previous = current;
-        accumulator += frameTime;
+        accumulator += frameTime * speedTime;
+
+        simulationTime += FIXED_DT * speedTime;
 
         while (accumulator >= FIXED_DT) {
-
-            v += g * FIXED_DT;
-
-            alt -= v * FIXED_DT;
-
-            if (alt <= -2.5) {
-                alt = -2.5;
-                v = -v * 0.85f;
-            }
+            activePhysic(FIXED_DT);
 
             accumulator -= FIXED_DT;
         }
@@ -145,8 +172,27 @@ int main(void) {
 
         {
             ImGui::Begin("Debugger");
-            // ImGui::SliderFloat3("Translation A", &translationA.x,
-            // 0.0f, 1.0f);
+
+            ImGui::SliderInt("Frequency", &frequency, 20, 120);
+            FIXED_DT = 1.0f / frequency;
+            ImGui::Text("FIXED_DT: %.3f", FIXED_DT);
+            ImGui::SliderFloat("Simulation Speed", &speedTime, 0.0f, 3.0f);
+
+            if (ImGui::SliderFloat("simulationTime", &simulationTime, 0.0f,
+                                   20.0f)) {
+                SimulationReset();
+                for (float i = FIXED_DT; i < simulationTime; i += FIXED_DT) {
+                    activePhysic(FIXED_DT);
+                }
+            }
+
+            ImGui::Text("simulation time: %.3f", simulationTime);
+            if (ImGui::Button("Pause"))
+                speedTime = speedTime == 0.0f ? 1.0f : 0.0f;
+
+            if (ImGui::Button("Reset"))
+                SimulationReset();
+
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / io.Framerate, io.Framerate);
             ImGui::End();

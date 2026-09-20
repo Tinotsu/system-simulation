@@ -25,6 +25,7 @@
 - [x] Fixed time step (delta t) and integrator - 18.09.2026
 
 - [ ] GUI to pause, accelerate, set time for the simulation
+
 - [ ] Making two objects orbiting around each other (Verlet/Leapfrog integration)
   - Newtonian gravity
   - Circular orbits
