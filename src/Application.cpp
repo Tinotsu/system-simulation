@@ -33,30 +33,54 @@ auto previous = std::chrono::steady_clock::now();
 
 float speedTime = 1;
 
-const float g = 9.81f;
+const float g = 6.7; // e-11
 
 // Initial State
-const float alt0 = 2.5f;
-const float v0 = 0.0f;
+const glm::vec2 r1_init = {0, 0};
+const glm::vec2 r2_init = {2, 2};
+glm::vec2 v1 = {1.09, -1.09};
+glm::vec2 v2 = {-1.09, 1.09};
 const float simulationTime0 = 0.0f;
 
-float alt = alt0;
-float v = v0;
+glm::vec2 r1 = r1_init;
+float m1 = 2;
+
+glm::vec2 r2 = r2_init;
+float m2 = 2;
+
 float simulationTime = simulationTime0;
 
 void SimulationReset() {
-    alt = alt0;
-    v = v0;
+    r1 = r1_init;
+    r2 = r2_init;
+    v1 = {1, -1};
+    v2 = {-1, 1};
 }
 
 void activePhysic(float dt) {
-    v += g * dt;
-    alt -= v * dt;
 
-    if (alt <= -2.5) {
-        alt = -2.5;
-        v = -v * 0.85f;
-    }
+    // TODO: Two Body problem here
+
+    float dx = r1.x - r2.x;
+    float dy = r1.y - r2.y;
+    float distance = sqrt(dx * dx + dy * dy);
+    glm::vec2 direction1 = {dx / distance, dy / distance};
+    glm::vec2 direction2 = {dx / distance, dy / distance};
+
+    float GForce = (g * m1 * m2) / (distance * distance);
+    float acc = GForce / m1;
+    glm::vec2 accCoor1 = {acc * direction1.x, acc * direction1.y};
+    glm::vec2 accCoor2 = {-acc * direction2.x, -acc * direction2.y};
+
+    // Accelerate
+
+    v1 -= accCoor1 * dt;
+    v2 -= accCoor2 * dt;
+
+    r1.x += v1.x * dt;
+    r1.y += v1.y * dt;
+    r2.x += v2.x * dt;
+    r2.y += v2.y * dt;
 }
 
 int main(void) {
@@ -160,11 +184,17 @@ int main(void) {
             accumulator -= FIXED_DT;
         }
 
-        glm::vec3 translationA(0, alt, 0);
-        glm::vec3 translationB(2, 1, 0);
+        glm::vec3 translationA(r1.x, r1.y, 0);
+        glm::vec3 translationB(r2.x, r2.y, 0);
 
         {
             glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
+            glm::mat4 mvp = proj * view * model;
+            shader.SetUniformMat4f("u_MVP", mvp);
+            renderer.Draw(va, ib, shader);
+        }
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
             glm::mat4 mvp = proj * view * model;
             shader.SetUniformMat4f("u_MVP", mvp);
             renderer.Draw(va, ib, shader);

@@ -27,6 +27,7 @@
 - [ ] GUI to pause, accelerate, set time for the simulation
 
 - [ ] Making two objects orbiting around each other (Verlet/Leapfrog integration)
+  - TWO-BODY PROBLEM
   - Newtonian gravity
   - Circular orbits
   - Conservation of energy
