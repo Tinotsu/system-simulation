@@ -1,8 +1,11 @@
 #include "glm/ext/vector_float2.hpp"
 #include "imgui.h"
+#include <vector>
 #define GL_SILENCE_DEPRECATION
 #define GLFW_INCLUDE_NONE
 #include "IndexBuffer.h"
+#include "Physics.h"
+#include "PhysicsConstant.h"
 #include "Renderer.h"
 #include "Shader.h"
 #include "VertexBuffer.h"
@@ -33,57 +36,29 @@ auto previous = std::chrono::steady_clock::now();
 
 float speedTime = 1;
 
-const float g = 6.7; // e-11
-
 // Initial State
-const glm::vec2 r1_init = {0, 0};
-const glm::vec2 r2_init = {2, 2};
-glm::vec2 v1 = {1.09, -1.09};
-glm::vec2 v2 = {-1.09, 1.09};
+
+std::vector<Object> objects{
+
+    {{0.0f, 0.0f}, {1.09, -1.09f}, 2.0f},
+    {{2.0f, 2.0f}, {-1.09, 1.09}, 2.0f},
+    {{2.0f, -2.0f}, {-1.09, -1.09}, 2.0f}};
+
 const float simulationTime0 = 0.0f;
-
-glm::vec2 r1 = r1_init;
-float m1 = 2;
-
-glm::vec2 r2 = r2_init;
-float m2 = 2;
-
 float simulationTime = simulationTime0;
 
+std::vector<Object> ObjectConstants;
+
 void SimulationReset() {
-    r1 = r1_init;
-    r2 = r2_init;
-    v1 = {1, -1};
-    v2 = {-1, 1};
-}
-
-void activePhysic(float dt) {
-
-    // TODO: Two Body problem here
-
-    float dx = r1.x - r2.x;
-    float dy = r1.y - r2.y;
-    float distance = sqrt(dx * dx + dy * dy);
-    glm::vec2 direction1 = {dx / distance, dy / distance};
-    glm::vec2 direction2 = {dx / distance, dy / distance};
-
-    float GForce = (g * m1 * m2) / (distance * distance);
-    float acc = GForce / m1;
-    glm::vec2 accCoor1 = {acc * direction1.x, acc * direction1.y};
-    glm::vec2 accCoor2 = {-acc * direction2.x, -acc * direction2.y};
-
-    // Accelerate
-
-    v1 -= accCoor1 * dt;
-    v2 -= accCoor2 * dt;
-
-    r1.x += v1.x * dt;
-    r1.y += v1.y * dt;
-    r2.x += v2.x * dt;
-    r2.y += v2.y * dt;
+    accumulator = 0.0f;
+    objects = ObjectConstants;
+    simulationTime = simulationTime0;
 }
 
 int main(void) {
+
+    ObjectConstants = objects;
+
     GLFWwindow *window;
 
     if (!glfwInit())
@@ -175,17 +150,21 @@ int main(void) {
 
         previous = current;
         accumulator += frameTime * speedTime;
-
         simulationTime += FIXED_DT * speedTime;
 
         while (accumulator >= FIXED_DT) {
-            activePhysic(FIXED_DT);
+            RunPhysic(FIXED_DT, objects[0], objects[1]);
+            RunPhysic(FIXED_DT, objects[1], objects[2]);
+            RunPhysic(FIXED_DT, objects[0], objects[2]);
 
+            simulationTime += FIXED_DT;
             accumulator -= FIXED_DT;
         }
 
-        glm::vec3 translationA(r1.x, r1.y, 0);
-        glm::vec3 translationB(r2.x, r2.y, 0);
+        glm::vec3 translationA(objects[0].position.x, objects[0].position.y, 0);
+        glm::vec3 translationB(objects[1].position.x, objects[1].position.y, 0);
+        // glm::vec3 translationC(objects[2].position.x, objects[2].position.y,
+        // 0);
 
         {
             glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
@@ -199,6 +178,12 @@ int main(void) {
             shader.SetUniformMat4f("u_MVP", mvp);
             renderer.Draw(va, ib, shader);
         }
+        //        {
+        //            glm::mat4 model = glm::translate(glm::mat4(1.0f),
+        //            translationC); glm::mat4 mvp = proj * view * model;
+        //            shader.SetUniformMat4f("u_MVP", mvp);
+        //            renderer.Draw(va, ib, shader);
+        //        }
 
         {
             ImGui::Begin("Debugger");
@@ -208,13 +193,17 @@ int main(void) {
             ImGui::Text("FIXED_DT: %.3f", FIXED_DT);
             ImGui::SliderFloat("Simulation Speed", &speedTime, 0.0f, 3.0f);
 
-            if (ImGui::SliderFloat("simulationTime", &simulationTime, 0.0f,
-                                   20.0f)) {
-                SimulationReset();
-                for (float i = FIXED_DT; i < simulationTime; i += FIXED_DT) {
-                    activePhysic(FIXED_DT);
-                }
-            }
+            // if (ImGui::SliderFloat("simulationTime", &simulationTime, 0.0f,
+            //                        20.0f)) {
+            //     SimulationReset();
+
+            //     for (float t = 0.0f; t + FIXED_DT <= simulationTime;
+            //          t += FIXED_DT) {
+            //         RunPhysic(FIXED_DT, objects[0], objects[1]);
+            //         RunPhysic(FIXED_DT, objects[1], objects[2]);
+            //         // RunPhysic(FIXED_DT, objects[0], objects[2]);
+            //     }
+            // }
 
             ImGui::Text("simulation time: %.3f", simulationTime);
             if (ImGui::Button("Pause"))
