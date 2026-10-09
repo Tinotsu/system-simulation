@@ -8,6 +8,7 @@ add_subdirectory(vendor/glfw-3.5.1)
 
 add_executable(Application
   src/Application.cpp
+  src/Physics.cpp
   src/Shader.cpp
   src/Texture.cpp
   src/IndexBuffer.cpp

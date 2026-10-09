@@ -1,8 +1,11 @@
 #include "glm/ext/vector_float2.hpp"
 #include "imgui.h"
+#include <vector>
 #define GL_SILENCE_DEPRECATION
 #define GLFW_INCLUDE_NONE
 #include "IndexBuffer.h"
+#include "Physics.h"
+#include "PhysicsConstant.h"
 #include "Renderer.h"
 #include "Shader.h"
 #include "VertexBuffer.h"
@@ -31,35 +34,84 @@ float FIXED_DT = 1.0 / frequency;
 float accumulator = 0.0f;
 auto previous = std::chrono::steady_clock::now();
 
-float speedTime = 1;
-
-const float g = 9.81f;
+float speedTime = 0;
 
 // Initial State
-const float alt0 = 2.5f;
-const float v0 = 0.0f;
-const float simulationTime0 = 0.0f;
 
-float alt = alt0;
-float v = v0;
-float simulationTime = simulationTime0;
+std::vector<Object> objects{
+    {"Sun",
+     {0, 0},
+     {0, 0},
+     {0, 0},
+     1989100,
+     695700.0 / 100,
+     {255, 255, 0, 1}}, // radius divided by 10
 
-void SimulationReset() {
-    alt = alt0;
-    v = v0;
-}
+    {"Mercury", {57910006, 0}, {0, 48}, {0, 0}, 0.33, 2439, {160, 160, 160, 1}},
 
-void activePhysic(float dt) {
-    v += g * dt;
-    alt -= v * dt;
+    {"Venus",
+     {108199995, 0},
+     {1, 35},
+     {0, 0},
+     4.87,
+     6051.85,
+     {255, 153, 51, 1}},
 
-    if (alt <= -2.5) {
-        alt = -2.5;
-        v = -v * 0.85f;
+    {"Earth", {149599951, 0}, {1, 30}, {0, 0}, 5.87, 6378.15, {0, 0, 255, 1}},
+
+    {"Mars", {227939920, 0}, {1, 24}, {0, 0}, 0.64, 3396, {255, 0, 0, 1}},
+
+    {"Jupiter",
+     {778330257, 0},
+     {1, 13},
+     {0, 0},
+     1898.9,
+     69911,
+     {244, 160, 25, 1}},
+
+    {"Saturn",
+     {1429400028, 0},
+     {1, 9.7},
+     {0, 0},
+     568.46,
+     58296,
+     {234, 123, 70, 1}},
+
+    {"Uranus", {2870989228, 0}, {1, 6.8}, {0, 0}, 86.62, 25559, {0, 0, 167, 1}},
+
+    {"Neptune",
+     {4504299579, 0},
+     {1, 5.4},
+     {0, 0},
+     102.43,
+     24764,
+     {10, 34, 210, 1}}};
+
+// Normalization
+
+void Normalization() {
+
+    for (int n = 0; n < objects.size(); n++) {
+        objects[n].position /= 149597870;
+        objects[n].radius /= 149597.870 / 2;
+        objects[n].mass /= 1989100;
+        objects[n].velocity *= 86400.0 / 149597870;
+        objects[n].acceleration *= 86400.0 / 149597870;
     }
 }
+const float simulationTime0 = 0.0f;
+float simulationTime = simulationTime0;
+
+std::vector<Object> ObjectConstants;
+
+void SimulationReset() { objects = ObjectConstants; }
+void TimeReset() { simulationTime = simulationTime0; }
 
 int main(void) {
+
+    ObjectConstants = objects;
+    Normalization();
+
     GLFWwindow *window;
 
     if (!glfwInit())
@@ -68,9 +120,10 @@ int main(void) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // required on macOS
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,
+                   GL_TRUE); // required on macOS
 
-    glm::ivec2 windowResolution(640, 480);
+    glm::ivec2 windowResolution(1280, 960);
     window = glfwCreateWindow(windowResolution.x, windowResolution.y,
                               "Hello World", NULL, NULL);
     if (!window) {
@@ -86,7 +139,7 @@ int main(void) {
         return -1;
     }
 
-    glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
+    // glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
 
     float positions[] = {
         -0.5f, -0.5f, // 0
@@ -106,17 +159,10 @@ int main(void) {
     layout.Push<float>(2);
     va.AddBuffer(vb, layout);
     IndexBuffer ib(indices, 6);
-    glm::mat4 proj = glm::ortho(-4.0f, 4.0f, -3.0f, 3.0f, -1.0f, 1.0f);
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 
     Shader shader("./res/shaders/Circle.shader");
     shader.Bind();
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glm::ivec2 iResolution;
-    glfwGetFramebufferSize(window, &iResolution.x, &iResolution.y);
-
-    shader.SetUniform2i("iResolution", iResolution.x, iResolution.y);
 
     va.UnBind();
     vb.UnBind();
@@ -142,6 +188,15 @@ int main(void) {
 
         shader.Bind();
 
+        glm::ivec2 iResolution;
+        glfwGetFramebufferSize(window, &iResolution.x, &iResolution.y);
+
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
+        glm::mat4 proj =
+            glm::ortho(-float(iResolution.x) / 200, float(iResolution.x) / 200,
+                       -float(iResolution.y) / 200, float(iResolution.y) / 200,
+                       -1.0f, 1.0f);
+        shader.SetUniform2i("iResolution", iResolution.x, iResolution.y);
         /* TIME */
 
         auto current = std::chrono::steady_clock::now();
@@ -151,24 +206,30 @@ int main(void) {
 
         previous = current;
         accumulator += frameTime * speedTime;
-
         simulationTime += FIXED_DT * speedTime;
 
         while (accumulator >= FIXED_DT) {
-            activePhysic(FIXED_DT);
+            RunPhysic(FIXED_DT, objects);
 
+            simulationTime += FIXED_DT;
             accumulator -= FIXED_DT;
         }
 
-        glm::vec3 translationA(0, alt, 0);
-        glm::vec3 translationB(2, 1, 0);
-
-        {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
-            glm::mat4 mvp = proj * view * model;
-            shader.SetUniformMat4f("u_MVP", mvp);
-            renderer.Draw(va, ib, shader);
-        }
+        for (int n = 0; n < objects.size(); n++) {
+            glm::vec3 translation(objects[n].position.x, objects[n].position.y,
+                                  0);
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
+                glm::mat4 mvp = proj * view * model;
+                shader.SetUniformMat4f("u_MVP", mvp);
+                shader.SetUniform1f("radius", objects[n].radius);
+                shader.SetUniform4f("color", objects[n].color.r / 255.0,
+                                    objects[n].color.g / 255.0,
+                                    objects[n].color.b / 255.0,
+                                    objects[n].color.a);
+                renderer.Draw(va, ib, shader);
+            }
+        };
 
         {
             ImGui::Begin("Debugger");
@@ -176,27 +237,33 @@ int main(void) {
             ImGui::SliderInt("Frequency", &frequency, 20, 120);
             FIXED_DT = 1.0f / frequency;
             ImGui::Text("FIXED_DT: %.3f", FIXED_DT);
-            ImGui::SliderFloat("Simulation Speed", &speedTime, 0.0f, 3.0f);
+            ImGui::SliderFloat("Simulation Speed", &speedTime, 0.0f, 50.0f);
 
             if (ImGui::SliderFloat("simulationTime", &simulationTime, 0.0f,
                                    20.0f)) {
+
+                float newSimulationTime = simulationTime;
                 SimulationReset();
-                for (float i = FIXED_DT; i < simulationTime; i += FIXED_DT) {
-                    activePhysic(FIXED_DT);
+
+                for (float t = 0.0f; t <= newSimulationTime; t += FIXED_DT) {
+                    RunPhysic(FIXED_DT, objects);
                 }
             }
 
             ImGui::Text("simulation time: %.3f", simulationTime);
-            if (ImGui::Button("Pause"))
+            if (ImGui::Button("START"))
                 speedTime = speedTime == 0.0f ? 1.0f : 0.0f;
 
-            if (ImGui::Button("Reset"))
+            if (ImGui::Button("Reset")) {
                 SimulationReset();
+                TimeReset();
+            }
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
         }
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

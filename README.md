@@ -24,14 +24,18 @@
 
 - [x] Fixed time step (delta t) and integrator - 18.09.2026
 
-- [ ] GUI to pause, accelerate, set time for the simulation
+- [x] GUI to pause, accelerate, set time for the simulation
 
-- [ ] Making two objects orbiting around each other (Verlet/Leapfrog integration)
+- [x] Making two objects orbiting around each other (Verlet/Leapfrog integration)
+  - TWO-BODY PROBLEM
   - Newtonian gravity
   - Circular orbits
   - Conservation of energy
   - Angular momentum
-  - Verlet / Leapfrog integration
+
+- [ ] Simulate light emitted by planets
+    Right now (10.10.2026) I have to scale the radius to make them visible. If
+    I simulate light, I can simulate the light we should see from them.
 
 - [ ] 3 body problems
   - N-body Newtonian gravity
@@ -50,6 +54,7 @@
 
 ### Launch Windows Calculation
 
+- [ ] Verlet / Leapfrog integration
 - [ ] Button to set the camera in position to make the system look 2D
 - [ ] SpaceShip object with trace
   - Two-body orbital mechanics
