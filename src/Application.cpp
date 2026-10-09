@@ -39,12 +39,66 @@ float speedTime = 0;
 // Initial State
 
 std::vector<Object> objects{
+    {"Sun",
+     {0, 0},
+     {0, 0},
+     {0, 0},
+     1989100,
+     695700.0 / 100,
+     {255, 255, 0, 1}}, // radius divided by 10
 
-    {{1, 1}, {1, -1}, {0, 0}, 2.0f},
-    //{{1, -1}, {0, -1}, {0, 0}, 2.0f},
-    //{{-1, 1}, {-1, 0}, {0, 0}, 2.0f},
-    {{-1, -1}, {-1, 1}, {0, 0}, 2.0f}};
+    {"Mercury", {57910006, 0}, {0, 48}, {0, 0}, 0.33, 2439, {160, 160, 160, 1}},
 
+    {"Venus",
+     {108199995, 0},
+     {1, 35},
+     {0, 0},
+     4.87,
+     6051.85,
+     {255, 153, 51, 1}},
+
+    {"Earth", {149599951, 0}, {1, 30}, {0, 0}, 5.87, 6378.15, {0, 0, 255, 1}},
+
+    {"Mars", {227939920, 0}, {1, 24}, {0, 0}, 0.64, 3396, {255, 0, 0, 1}},
+
+    {"Jupiter",
+     {778330257, 0},
+     {1, 13},
+     {0, 0},
+     1898.9,
+     69911,
+     {244, 160, 25, 1}},
+
+    {"Saturn",
+     {1429400028, 0},
+     {1, 9.7},
+     {0, 0},
+     568.46,
+     58296,
+     {234, 123, 70, 1}},
+
+    {"Uranus", {2870989228, 0}, {1, 6.8}, {0, 0}, 86.62, 25559, {0, 0, 167, 1}},
+
+    {"Neptune",
+     {4504299579, 0},
+     {1, 5.4},
+     {0, 0},
+     102.43,
+     24764,
+     {10, 34, 210, 1}}};
+
+// Normalization
+
+void Normalization() {
+
+    for (int n = 0; n < objects.size(); n++) {
+        objects[n].position /= 149597870;
+        objects[n].radius /= 149597.870 / 2;
+        objects[n].mass /= 1989100;
+        objects[n].velocity *= 86400.0 / 149597870;
+        objects[n].acceleration *= 86400.0 / 149597870;
+    }
+}
 const float simulationTime0 = 0.0f;
 float simulationTime = simulationTime0;
 
@@ -56,6 +110,7 @@ void TimeReset() { simulationTime = simulationTime0; }
 int main(void) {
 
     ObjectConstants = objects;
+    Normalization();
 
     GLFWwindow *window;
 
@@ -84,7 +139,7 @@ int main(void) {
         return -1;
     }
 
-    glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
+    // glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
 
     float positions[] = {
         -0.5f, -0.5f, // 0
@@ -167,6 +222,11 @@ int main(void) {
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
                 glm::mat4 mvp = proj * view * model;
                 shader.SetUniformMat4f("u_MVP", mvp);
+                shader.SetUniform1f("radius", objects[n].radius);
+                shader.SetUniform4f("color", objects[n].color.r / 255.0,
+                                    objects[n].color.g / 255.0,
+                                    objects[n].color.b / 255.0,
+                                    objects[n].color.a);
                 renderer.Draw(va, ib, shader);
             }
         };
@@ -177,7 +237,7 @@ int main(void) {
             ImGui::SliderInt("Frequency", &frequency, 20, 120);
             FIXED_DT = 1.0f / frequency;
             ImGui::Text("FIXED_DT: %.3f", FIXED_DT);
-            ImGui::SliderFloat("Simulation Speed", &speedTime, 0.0f, 3.0f);
+            ImGui::SliderFloat("Simulation Speed", &speedTime, 0.0f, 50.0f);
 
             if (ImGui::SliderFloat("simulationTime", &simulationTime, 0.0f,
                                    20.0f)) {
