@@ -34,14 +34,15 @@ float FIXED_DT = 1.0 / frequency;
 float accumulator = 0.0f;
 auto previous = std::chrono::steady_clock::now();
 
-float speedTime = 1;
+float speedTime = 0;
 
 // Initial State
 
 std::vector<Object> objects{
 
     {{1, 1}, {1, -1}, {0, 0}, 2.0f},
-    //{{1, -1}, {1, 1}, {0, 0}, 2.0f},
+    //{{1, -1}, {0, -1}, {0, 0}, 2.0f},
+    //{{-1, 1}, {-1, 0}, {0, 0}, 2.0f},
     {{-1, -1}, {-1, 1}, {0, 0}, 2.0f}};
 
 const float simulationTime0 = 0.0f;
@@ -67,7 +68,7 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,
                    GL_TRUE); // required on macOS
 
-    glm::ivec2 windowResolution(640, 480);
+    glm::ivec2 windowResolution(1280, 960);
     window = glfwCreateWindow(windowResolution.x, windowResolution.y,
                               "Hello World", NULL, NULL);
     if (!window) {
@@ -103,17 +104,10 @@ int main(void) {
     layout.Push<float>(2);
     va.AddBuffer(vb, layout);
     IndexBuffer ib(indices, 6);
-    glm::mat4 proj = glm::ortho(-4.0f, 4.0f, -3.0f, 3.0f, -1.0f, 1.0f);
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 
     Shader shader("./res/shaders/Circle.shader");
     shader.Bind();
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glm::ivec2 iResolution;
-    glfwGetFramebufferSize(window, &iResolution.x, &iResolution.y);
-
-    shader.SetUniform2i("iResolution", iResolution.x, iResolution.y);
 
     va.UnBind();
     vb.UnBind();
@@ -139,6 +133,15 @@ int main(void) {
 
         shader.Bind();
 
+        glm::ivec2 iResolution;
+        glfwGetFramebufferSize(window, &iResolution.x, &iResolution.y);
+
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
+        glm::mat4 proj =
+            glm::ortho(-float(iResolution.x) / 200, float(iResolution.x) / 200,
+                       -float(iResolution.y) / 200, float(iResolution.y) / 200,
+                       -1.0f, 1.0f);
+        shader.SetUniform2i("iResolution", iResolution.x, iResolution.y);
         /* TIME */
 
         auto current = std::chrono::steady_clock::now();
@@ -188,7 +191,7 @@ int main(void) {
             }
 
             ImGui::Text("simulation time: %.3f", simulationTime);
-            if (ImGui::Button("Pause"))
+            if (ImGui::Button("START"))
                 speedTime = speedTime == 0.0f ? 1.0f : 0.0f;
 
             if (ImGui::Button("Reset")) {
