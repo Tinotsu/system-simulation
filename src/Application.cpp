@@ -49,11 +49,8 @@ float simulationTime = simulationTime0;
 
 std::vector<Object> ObjectConstants;
 
-void SimulationReset() {
-    accumulator = 0.0f;
-    objects = ObjectConstants;
-    simulationTime = simulationTime0;
-}
+void SimulationReset() { objects = ObjectConstants; }
+void TimeReset() { simulationTime = simulationTime0; }
 
 int main(void) {
 
@@ -154,8 +151,6 @@ int main(void) {
 
         while (accumulator >= FIXED_DT) {
             RunPhysic(FIXED_DT, objects[0], objects[1]);
-            RunPhysic(FIXED_DT, objects[1], objects[2]);
-            RunPhysic(FIXED_DT, objects[0], objects[2]);
 
             simulationTime += FIXED_DT;
             accumulator -= FIXED_DT;
@@ -193,29 +188,31 @@ int main(void) {
             ImGui::Text("FIXED_DT: %.3f", FIXED_DT);
             ImGui::SliderFloat("Simulation Speed", &speedTime, 0.0f, 3.0f);
 
-            // if (ImGui::SliderFloat("simulationTime", &simulationTime, 0.0f,
-            //                        20.0f)) {
-            //     SimulationReset();
+            if (ImGui::SliderFloat("simulationTime", &simulationTime, 0.0f,
+                                   20.0f)) {
 
-            //     for (float t = 0.0f; t + FIXED_DT <= simulationTime;
-            //          t += FIXED_DT) {
-            //         RunPhysic(FIXED_DT, objects[0], objects[1]);
-            //         RunPhysic(FIXED_DT, objects[1], objects[2]);
-            //         // RunPhysic(FIXED_DT, objects[0], objects[2]);
-            //     }
-            // }
+                float newSimulationTime = simulationTime;
+                SimulationReset();
+
+                for (float t = 0.0f; t <= newSimulationTime; t += FIXED_DT) {
+                    RunPhysic(FIXED_DT, objects[0], objects[1]);
+                }
+            }
 
             ImGui::Text("simulation time: %.3f", simulationTime);
             if (ImGui::Button("Pause"))
                 speedTime = speedTime == 0.0f ? 1.0f : 0.0f;
 
-            if (ImGui::Button("Reset"))
+            if (ImGui::Button("Reset")) {
                 SimulationReset();
+                TimeReset();
+            }
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
         }
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
