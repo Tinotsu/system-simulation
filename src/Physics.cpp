@@ -4,24 +4,37 @@
 #include "PhysicsConstant.h"
 #include "glm/ext/vector_float2.hpp"
 #include <cmath>
+#include <vector>
 
-void RunPhysic(float dt, Object &obj1, Object &obj2) {
-    float dx = obj1.position.x - obj2.position.x;
-    float dy = obj1.position.y - obj2.position.y;
-    float distance = sqrt(dx * dx + dy * dy);
-    glm::vec2 direction1 = {dx / distance, dy / distance};
-    glm::vec2 direction2 = {dx / distance, dy / distance};
+void RunPhysic(float dt, std::vector<Object> &objects) {
+    for (int n = 0; n < objects.size(); n++) {
+        objects[n].acceleration = {0, 0};
+    }
 
-    float GForce = (g * obj1.mass * obj2.mass) / (distance * distance);
-    float acc = GForce / obj1.mass;
-    glm::vec2 accCoor1 = {acc * direction1.x, acc * direction1.y};
-    glm::vec2 accCoor2 = {-acc * direction2.x, -acc * direction2.y};
+    for (int n = 0; n < objects.size(); n++) {
+        for (int i = n + 1; i < objects.size(); i++) {
 
-    obj1.velocity -= accCoor1 * dt;
-    obj2.velocity -= accCoor2 * dt;
+            if (n != i) {
+                float dx = objects[n].position.x - objects[i].position.x;
+                float dy = objects[n].position.y - objects[i].position.y;
+                float rSquare = dx * dx + dy * dy;
 
-    obj1.position.x += obj1.velocity.x * dt;
-    obj1.position.y += obj1.velocity.y * dt;
-    obj2.position.x += obj2.velocity.x * dt;
-    obj2.position.y += obj2.velocity.y * dt;
+                if (rSquare != 0.0) {
+                    glm::vec2 direction = {dx / sqrt(rSquare),
+                                           dy / sqrt(rSquare)};
+                    float F;
+                    F = (G * objects[n].mass * objects[i].mass) / rSquare;
+                    objects[n].acceleration -=
+                        direction * (F / objects[n].mass);
+                    objects[i].acceleration +=
+                        direction * (F / objects[i].mass);
+                }
+            }
+        }
+    }
+
+    for (int n = 0; n < objects.size(); n++) {
+        objects[n].velocity += objects[n].acceleration * dt;
+        objects[n].position += objects[n].velocity * dt;
+    }
 }

@@ -1,2 +1,2 @@
 
-const float g = 6.7; // e-11
+const float G = 6.7; // e-11

@@ -40,9 +40,9 @@ float speedTime = 1;
 
 std::vector<Object> objects{
 
-    {{0.0f, 0.0f}, {1.09, -1.09f}, 2.0f},
-    {{2.0f, 2.0f}, {-1.09, 1.09}, 2.0f},
-    {{2.0f, -2.0f}, {-1.09, -1.09}, 2.0f}};
+    {{1, 1}, {1, -1}, {0, 0}, 2.0f},
+    //{{1, -1}, {1, 1}, {0, 0}, 2.0f},
+    {{-1, -1}, {-1, 1}, {0, 0}, 2.0f}};
 
 const float simulationTime0 = 0.0f;
 float simulationTime = simulationTime0;
@@ -64,7 +64,8 @@ int main(void) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // required on macOS
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,
+                   GL_TRUE); // required on macOS
 
     glm::ivec2 windowResolution(640, 480);
     window = glfwCreateWindow(windowResolution.x, windowResolution.y,
@@ -150,35 +151,22 @@ int main(void) {
         simulationTime += FIXED_DT * speedTime;
 
         while (accumulator >= FIXED_DT) {
-            RunPhysic(FIXED_DT, objects[0], objects[1]);
+            RunPhysic(FIXED_DT, objects);
 
             simulationTime += FIXED_DT;
             accumulator -= FIXED_DT;
         }
 
-        glm::vec3 translationA(objects[0].position.x, objects[0].position.y, 0);
-        glm::vec3 translationB(objects[1].position.x, objects[1].position.y, 0);
-        // glm::vec3 translationC(objects[2].position.x, objects[2].position.y,
-        // 0);
-
-        {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
-            glm::mat4 mvp = proj * view * model;
-            shader.SetUniformMat4f("u_MVP", mvp);
-            renderer.Draw(va, ib, shader);
-        }
-        {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
-            glm::mat4 mvp = proj * view * model;
-            shader.SetUniformMat4f("u_MVP", mvp);
-            renderer.Draw(va, ib, shader);
-        }
-        //        {
-        //            glm::mat4 model = glm::translate(glm::mat4(1.0f),
-        //            translationC); glm::mat4 mvp = proj * view * model;
-        //            shader.SetUniformMat4f("u_MVP", mvp);
-        //            renderer.Draw(va, ib, shader);
-        //        }
+        for (int n = 0; n < objects.size(); n++) {
+            glm::vec3 translation(objects[n].position.x, objects[n].position.y,
+                                  0);
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
+                glm::mat4 mvp = proj * view * model;
+                shader.SetUniformMat4f("u_MVP", mvp);
+                renderer.Draw(va, ib, shader);
+            }
+        };
 
         {
             ImGui::Begin("Debugger");
@@ -195,7 +183,7 @@ int main(void) {
                 SimulationReset();
 
                 for (float t = 0.0f; t <= newSimulationTime; t += FIXED_DT) {
-                    RunPhysic(FIXED_DT, objects[0], objects[1]);
+                    RunPhysic(FIXED_DT, objects);
                 }
             }
 
